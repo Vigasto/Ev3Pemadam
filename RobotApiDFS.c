@@ -20,7 +20,8 @@ void brake();
 task main()
 {
 	initialize();
-	//while(1)
+	while(1)
+		//turnLeft();
 		followLine();
 }
 
@@ -50,24 +51,38 @@ void followLine()
 	bool switcher = false;             //turn slightly right if 1
 	while (!inColor())
 	{
-		while (inLine())
+		while (inLine() && !inColor())
 			moveForward();
 		if (!inLine() && !inColor())
 		{
 			brake();
 			if (switcher)
 			{
-				while (!inLine())
+				resetGyro(gyroSensor);
+				while (!inLine() && getGyroHeading(gyroSensor)<180)
 				{
 					turnRight();
 				}
+				if (getGyroHeading(gyroSensor)>=180)
+				{
+					repeatUntil(getGyroHeading(gyroSensor)<=0)
+						turnLeft();
+				}
+				resetGyro(gyroSensor);
 			}
 			else
 			{
-				while (!inLine())
+				resetGyro(gyroSensor);
+				while (!inLine() && getGyroHeading(gyroSensor)>-180)
 				{
 					turnLeft();
 				}
+				if (getGyroHeading(gyroSensor)<=-180)
+				{
+					repeatUntil(getGyroHeading(gyroSensor)>=0)
+						turnRight();
+				}
+				resetGyro(gyroSensor);
 			}
 			switcher = !switcher;
 		}
@@ -76,7 +91,7 @@ void followLine()
 
 void moveForward()
 {
-	setMotorSync(leftMotor,rightMotor,0,100);
+	setMotorSpeed(rightMotor,100);
 	setMotorSpeed(leftMotor,100);
 	delay(2);
 	brake();
@@ -84,16 +99,16 @@ void moveForward()
 
 void turnRight()
 {
-	setMotorSpeed(rightMotor,100);
-	setMotorSpeed(leftMotor,-100);
+	setMotorSpeed(rightMotor,-100);
+	setMotorSpeed(leftMotor,100);
 	delay(2);
 	brake();
 }
 
 void turnLeft()
 {
-	setMotorSpeed(rightMotor,-100);
-	setMotorSpeed(leftMotor,100);
+	setMotorSpeed(rightMotor,100);
+	setMotorSpeed(leftMotor,-100);
 	delay(2);
 	brake();
 }
