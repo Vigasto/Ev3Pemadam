@@ -20,9 +20,7 @@ void brake();
 task main()
 {
 	initialize();
-	moveForward();
-	delay(500);
-	brake();
+	followLine();
 }
 
 void initialize()
@@ -30,6 +28,52 @@ void initialize()
 	setMotorBrakeMode(leftMotor,motorBrake);
 	setMotorBrakeMode(rightMotor,motorBrake);
 }
+
+void DFSAction()
+{
+
+}
+
+bool inColor()
+{
+	return (getColorName(colorSensor)==colorRed || getColorName(colorSensor)==colorBlue || getColorName(colorSensor)==colorGreen || getColorName(colorSensor)==colorYellow);
+}
+
+bool inLine()
+{
+	return (inColor() || getColorName(colorSensor)==colorBlack);
+}
+
+void followLine()
+{
+	bool switcher = false;             //turn slightly right if 1
+	while (!inColor())
+	{
+		while (inLine())
+			moveForward();
+		if (!inLine() && !inColor())
+		{
+			if (switcher)
+			{
+				while (!inLine())
+				{
+					setMotorSpeed(rightMotor,0);
+					setMotorSpeed(leftMotor,100);
+				}
+			}
+			else
+			{
+				while (!inLine())
+				{
+					setMotorSpeed(leftMotor,0);
+					setMotorSpeed(rightMotor,100);
+				}
+			}
+			switcher = !switcher;
+		}
+	}
+}
+
 void moveForward()
 {
 	setMotorSync(leftMotor,rightMotor,0,100);
