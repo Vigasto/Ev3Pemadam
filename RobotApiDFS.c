@@ -13,14 +13,15 @@ bool inColor();					//Ngecek posisi di blok warna
 bool inLine();          //Ngecek di garis atau kaga
 void followLine();			//Ngikutin garis doang
 void moveForward();     //maju lurus doang
-void turnRight();  			//belok kanan 90"
-void turnLeft();				//belok kiri 90"
+void turnRight();
+void turnLeft();
 void brake();
 
 task main()
 {
 	initialize();
-	followLine();
+	//while(1)
+		followLine();
 }
 
 void initialize()
@@ -53,20 +54,19 @@ void followLine()
 			moveForward();
 		if (!inLine() && !inColor())
 		{
+			brake();
 			if (switcher)
 			{
 				while (!inLine())
 				{
-					setMotorSpeed(rightMotor,0);
-					setMotorSpeed(leftMotor,100);
+					turnRight();
 				}
 			}
 			else
 			{
 				while (!inLine())
 				{
-					setMotorSpeed(leftMotor,0);
-					setMotorSpeed(rightMotor,100);
+					turnLeft();
 				}
 			}
 			switcher = !switcher;
@@ -78,6 +78,24 @@ void moveForward()
 {
 	setMotorSync(leftMotor,rightMotor,0,100);
 	setMotorSpeed(leftMotor,100);
+	delay(2);
+	brake();
+}
+
+void turnRight()
+{
+	setMotorSpeed(rightMotor,100);
+	setMotorSpeed(leftMotor,-100);
+	delay(2);
+	brake();
+}
+
+void turnLeft()
+{
+	setMotorSpeed(rightMotor,-100);
+	setMotorSpeed(leftMotor,100);
+	delay(2);
+	brake();
 }
 
 void brake()
