@@ -13,16 +13,16 @@ bool inColor();					//Ngecek posisi di blok warna
 bool inLine();          //Ngecek di garis atau kaga
 void followLine();			//Ngikutin garis doang
 void moveForward();     //maju lurus doang
-void turnRight();  			//belok kanan 90"
-void turnLeft();				//belok kiri 90"
+void turnRight();
+void turnLeft();
 void brake();
 
 task main()
 {
 	initialize();
-	moveForward();
-	delay(500);
-	brake();
+	while(1)
+		//turnLeft();
+		followLine();
 }
 
 void initialize()
@@ -30,10 +30,87 @@ void initialize()
 	setMotorBrakeMode(leftMotor,motorBrake);
 	setMotorBrakeMode(rightMotor,motorBrake);
 }
+
+void DFSAction()
+{
+
+}
+
+bool inColor()
+{
+	return (getColorName(colorSensor)==colorRed || getColorName(colorSensor)==colorBlue || getColorName(colorSensor)==colorGreen || getColorName(colorSensor)==colorYellow);
+}
+
+bool inLine()
+{
+	return (inColor() || getColorName(colorSensor)==colorBlack);
+}
+
+void followLine()
+{
+	bool switcher = false;             //turn slightly right if 1
+	while (!inColor())
+	{
+		while (inLine() && !inColor())
+			moveForward();
+		if (!inLine() && !inColor())
+		{
+			brake();
+			if (switcher)
+			{
+				resetGyro(gyroSensor);
+				while (!inLine() && getGyroHeading(gyroSensor)<180)
+				{
+					turnRight();
+				}
+				if (getGyroHeading(gyroSensor)>=180)
+				{
+					repeatUntil(getGyroHeading(gyroSensor)<=0)
+						turnLeft();
+				}
+				resetGyro(gyroSensor);
+			}
+			else
+			{
+				resetGyro(gyroSensor);
+				while (!inLine() && getGyroHeading(gyroSensor)>-180)
+				{
+					turnLeft();
+				}
+				if (getGyroHeading(gyroSensor)<=-180)
+				{
+					repeatUntil(getGyroHeading(gyroSensor)>=0)
+						turnRight();
+				}
+				resetGyro(gyroSensor);
+			}
+			switcher = !switcher;
+		}
+	}
+}
+
 void moveForward()
 {
-	setMotorSync(leftMotor,rightMotor,0,100);
+	setMotorSpeed(rightMotor,100);
 	setMotorSpeed(leftMotor,100);
+	delay(2);
+	brake();
+}
+
+void turnRight()
+{
+	setMotorSpeed(rightMotor,-100);
+	setMotorSpeed(leftMotor,100);
+	delay(2);
+	brake();
+}
+
+void turnLeft()
+{
+	setMotorSpeed(rightMotor,100);
+	setMotorSpeed(leftMotor,-100);
+	delay(2);
+	brake();
 }
 
 void brake()
