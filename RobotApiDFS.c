@@ -18,6 +18,8 @@ long red, green, blue;
 short counter[maxJunction+1];
 long degree[maxJunction+1];
 int curJunct; //junction pertama nilainya 1
+char kata[15];
+int nkata = 0;
 
 //calib results
 short pathTreshold = 45;
@@ -36,7 +38,7 @@ void followLine(short treshold, short leftoffset, short rightoffset);			//Ngikut
 void searchPath();			//Ngikutin sampe ketemu path
 void followPath();			//Ngikutin garis doang
 void turnBack();        //balik kanan grak (180")
-void moveForward();     //maju lurus doang
+void moveForward(long t);     //maju lurus doang
 void brake();
 void extinguish();
 
@@ -61,6 +63,8 @@ void initialize()
 	Ki = 0;
 	Kd = 0;
 	curJunct = 0;
+	degree[curJunct] = getGyroHeading(gyroSensor);
+	eraseDisplay();
 }
 
 void DFSAction()
@@ -85,16 +89,28 @@ void DFSAction()
 		{
 			extinguish();
 			finish = true;
+			Display(counter[curJunct]);
 			turnBack();
 		}
 		else //junction
 		{
-			long candidate =
+			if (curJunct>0)
+			{
+				long candidate = degree[curJunct];
+				if (candidate>=180)
+					candidate = candidate - 180;
+				if (-30<(candidate-degree[curJunct-1]) && (candidate-degree[curJunct-1])<30)
+				{
+					returning = true;
+					curJunct--;
+				} // returning to previous branch
+			}
 			if (returning)
 			{
 				Display(counter[curJunct]);
 				searchPath();
 				counter[curJunct]++;
+				returning = false;
 			}
 			else //new junction
 			{
@@ -107,23 +123,56 @@ void DFSAction()
 			}
 		}
 	}
-	while (getColorName(colorSensor)==colorBlue)
+	while (!(blue>=35 && red<35 && green<35))
 	{
 		followPath();
-		if (getColorName(colorSensor)==colorBlue)
+		getColorRGB(colorSensor,red, green, blue);
+		if (blue>=35 && red<35 && green<35)
 		{
 			finish = true;
 			brake();
 		}
 		else
 		{
-
+			forward(1,rotations,60);
+			long targetheading = degree[curJunct];
+			targetheading = normalizeHeading(targetheading-180);
+			long head = normalizeHeading(getGyroHeading(gyroSensor));
+			if (0<(head-targetheading) && (head-targetheading)<180)
+				while (head!=targetheading)
+				{
+					setMotorSpeed(rightMotor,25);
+					setMotorSpeed(leftMotor,-25);
+					head = normalizeHeading(getGyroHeading(gyroSensor));
+				}
+			else
+				while (head<targetheading)
+				{
+					setMotorSpeed(leftMotor, 25);
+					setMotorSpeed(rightMotor,-25);
+					head = normalizeHeading(getGyroHeading(gyroSensor));
+				}
+			forward(1,rotations,75);
+		}
+		if (curJunct>0)
+			Display(counter[curJunct]);
+		curJunct--;
+	}
+	brake();
 }
 
 void Display(int way)
 {
-
+ eraseDisplay();
+ char x;
+ x = way +'0';
+ kata[nkata] = x;
+ nkata++;
+ displayString(1,"Lintasan : ");
+ displayString(2,kata);
+ sleep(50);
 }
+
 bool inColor()
 {
 	getColorRGB(colorSensor,red,green,blue);
@@ -195,16 +244,17 @@ void turnBack()
 			setMotorSpeed(rightMotor,-100);
 			curdir = normalizeHeading(getGyroHeading(gyroSensor));
 		}
+
 	}
 	brake();
 }
 
-void moveForward()
+void moveForward(long t)
 {
 	setMotorSpeed(rightMotor,100);
 	setMotorSpeed(leftMotor,100);
-	delay(2);
-	brake();
+	delay(t);
+	//brake();
 }
 
 void brake()
