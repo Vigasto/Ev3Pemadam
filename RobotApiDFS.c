@@ -75,7 +75,8 @@ void DFSAction()
 	while (finish == false)
 	{
 		followPath();
-		if (getColorName(colorSensor)==colorBlue)
+		getColorRGB(colorSensor,red, green, blue);
+		if (blue>=35 && red<35 && green<35)
 		{
 			finish = true;
 			brake();

@@ -16,8 +16,8 @@ float Kp, Ki, Kd;
 int corrval;
 long red, green, blue;
 short counter[maxJunction+1];
-long degree[maxJunction+1];
-int curJunct; //junction pertama nilainya 1
+long degree[maxJunction*4];
+int curJunct; //junction pertama nilainya 0
 char kata[15];
 int nkata = 0;
 
@@ -46,7 +46,6 @@ task main()
 {
 	initialize();
 	BSFSAction();
-	 //searchPath();
 }
 
 void initialize()
@@ -62,7 +61,7 @@ void initialize()
 	Kp = 0;
 	Ki = 0;
 	Kd = 0;
-	curJunct = 0;
+	curJunct = -1;
 	degree[curJunct] = getGyroHeading(gyroSensor);
 	eraseDisplay();
 }
@@ -72,7 +71,42 @@ void BFSAction()
 	bool finish = false;
 	bool returning = false;
 	bool willreturn = false;
-
+	bool mode = false;        //1 explore,
+	searchPath();            //blok biru start
+	while (finish==false)
+	{
+		followPath();
+		getColorRGB(colorSensor,red, green, blue);
+		if (blue>=35 && red<35 && green<35)
+		{
+			finish = true;
+			brake();
+		}
+		else if (getColorName(colorSensor)==colorRed)
+		{
+			turnBack();
+			returning = true;
+			followPath();
+			degree[4*curJunct+counter[curJunct]]=normalizeHeading(getGyroHeading(gyroSensor));
+		}
+		else if (getColorName(colorSensor)==colorYellow)
+		{
+			extinguish();
+			finish = true;
+			turnBack();
+		}
+		else //Junction
+		{
+			if (curJunct>-1)
+			{
+				long candidate = normalizeHeading(getGyroHeading(gyroSensor));
+				candidate = normalizeHeading(candidate - 180);
+				if (-30<(candidate-degree[curJunct-1]) && (candidate-degree[curJunct-1])<30)
+				{
+					returning = true;
+					curJunct--;
+				} // returning to previous branch
+			}
 }
 
 void Display(int way)
