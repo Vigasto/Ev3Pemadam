@@ -16,6 +16,7 @@ float Kp, Ki, Kd;
 int corrval;
 long red, green, blue;
 short counter[maxJunction+1];
+long degree[maxJunction+1];
 int curJunct; //junction pertama nilainya 1
 
 //calib results
@@ -25,6 +26,7 @@ short lineTreshold = 17;
 //aubprogram inti
 void initialize();			//inisiasi setting motor & sensor
 void DFSAction();
+void Display(int way);
 //fungsi dasar
 bool inColor();					//Ngecek posisi di blok warna
 bool inLine();          //Ngecek di garis atau path
@@ -36,11 +38,13 @@ void followPath();			//Ngikutin garis doang
 void turnBack();        //balik kanan grak (180")
 void moveForward();     //maju lurus doang
 void brake();
+void extinguish();
 
 task main()
 {
 	initialize();
-
+	DFSAction();
+	 //searchPath();
 }
 
 void initialize()
@@ -61,9 +65,65 @@ void initialize()
 
 void DFSAction()
 {
+	bool finish = false;
+	bool returning = false;
+	searchPath();
+	while (finish == false)
+	{
+		followPath();
+		if (getColorName(colorSensor)==colorBlue)
+		{
+			finish = true;
+			brake();
+		}
+		else if (getColorName(colorSensor)==colorRed)
+		{
+			turnBack();
+			returning = true;
+		}
+		else if (getColorName(colorSensor)==colorYellow)
+		{
+			extinguish();
+			finish = true;
+			turnBack();
+		}
+		else //junction
+		{
+			long candidate =
+			if (returning)
+			{
+				Display(counter[curJunct]);
+				searchPath();
+				counter[curJunct]++;
+			}
+			else //new junction
+			{
+				if (curJunct > 0)
+					Display(counter[curJunct]);
+				curJunct++;
+				degree[curJunct] = normalizeHeading(getGyroHeading(gyroSensor));
+				counter[curJunct] = 1;
+				searchPath();
+			}
+		}
+	}
+	while (getColorName(colorSensor)==colorBlue)
+	{
+		followPath();
+		if (getColorName(colorSensor)==colorBlue)
+		{
+			finish = true;
+			brake();
+		}
+		else
+		{
 
 }
 
+void Display(int way)
+{
+
+}
 bool inColor()
 {
 	getColorRGB(colorSensor,red,green,blue);
@@ -106,11 +166,13 @@ void followPath()
 
 void searchPath()
 {
-	followLine(lineTreshold,20,0);
+	while (inColor())
+		followLine(lineTreshold,20,0);
 }
 
 void turnBack()
 {
+	brake();
 	long curdir = normalizeHeading(getGyroHeading(gyroSensor));
 	long targetdir;
 	if (curdir>=180)
@@ -134,6 +196,7 @@ void turnBack()
 			curdir = normalizeHeading(getGyroHeading(gyroSensor));
 		}
 	}
+	brake();
 }
 
 void moveForward()
@@ -148,4 +211,16 @@ void brake()
 {
 	setMotorSpeed(leftMotor,0);
 	setMotorSpeed(rightMotor,0);
+}
+
+void extinguish()
+{
+	brake();
+	for (int i=0; i<5; i++)
+	{
+		setMotorSpeed(armMotor,100);
+		delay(70);
+		setMotorSpeed(armMotor,-100);
+		delay(70);
+	}
 }
