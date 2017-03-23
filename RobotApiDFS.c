@@ -15,7 +15,7 @@ float previousError;
 float Kp, Ki, Kd;
 int corrval;
 long red, green, blue;
-long degr[maxJunction*4]; //per junc dapet 4, 1 untuk init, 3 untuk degree path
+short counter[maxJunction+1];
 int curJunct; //junction pertama nilainya 1
 
 //calib results
@@ -28,8 +28,9 @@ void DFSAction();
 //fungsi dasar
 bool inColor();					//Ngecek posisi di blok warna
 bool inLine();          //Ngecek di garis atau path
+long normalizeHeading(long heading);
 //basic movement
-void followLine();			//Ngikutin garis & path
+void followLine(short treshold, short leftoffset, short rightoffset);			//Ngikutin garis & path
 void searchPath();			//Ngikutin sampe ketemu path
 void followPath();			//Ngikutin garis doang
 void turnBack();        //balik kanan grak (180")
@@ -39,12 +40,7 @@ void brake();
 task main()
 {
 	initialize();
-	//while(1)
-		//turnLeft();
-		followPath();
-		searchPath();
-		followPath();
-	//short temp = getColorAmbient(colorSensor);
+
 }
 
 void initialize()
@@ -60,7 +56,7 @@ void initialize()
 	Kp = 0;
 	Ki = 0;
 	Kd = 0;
-
+	curJunct = 0;
 }
 
 void DFSAction()
@@ -79,56 +75,71 @@ bool inLine()
 	return (inColor() || getColorName(colorSensor)==colorBlack);
 }
 
-void followLine()
+long normalizeHeading (long heading)
 {
-  corrval = (50-pathTreshold);
-	Kp = ((getColorAmbient(colorSensor) - pathTreshold)) - corrval;
+ 	if (heading>0)
+ 	{
+  	return heading % 360;
+ 	}
+ 	else
+ 	{
+  	return ((heading%360)+360)%360;
+ 	}
+}
+
+void followLine(short treshold, short leftoffset, short rightoffset)
+{
+  corrval = (50-treshold);
+	Kp = ((getColorAmbient(colorSensor) - treshold)) - corrval;
   Ki = Ki + Kp;
   Kd = (Kp - previousError);
-  setMotorSpeed(rightMotor,constantPower + ((Kp * variablePower) / 50) + ((Ki * integralConstant) / 50) + ((Kd * derivativeConstant) / 50) + 20);
-  setMotorSpeed(leftMotor,constantPower - ((Kp * variablePower) / 50) - ((Ki * integralConstant) / 50) - ((Kd * derivativeConstant)/ 50));
+  setMotorSpeed(rightMotor,constantPower + ((Kp * variablePower) / 50) + ((Ki * integralConstant) / 50) + ((Kd * derivativeConstant) / 50) + rightoffset);
+  setMotorSpeed(leftMotor,constantPower - ((Kp * variablePower) / 50) - ((Ki * integralConstant) / 50) - ((Kd * derivativeConstant)/ 50) + leftoffset);
   previousError = Kp;  // Each time through the loop we set the new value for the previousError
 }
 
 void followPath()
 {
 	while (!inColor())
-		followLine();
+		followLine(pathTreshold,0,20);
 }
 
 void searchPath()
 {
-	while (inColor())//!getColorName(colorSensor)==colorBlack)
-		{
-		  corrval = (50-lineTreshold);
-			Kp = ((getColorAmbient(colorSensor) - lineTreshold)) - corrval;
-		  Ki = Ki + Kp;
-		  Kd = (Kp - previousError);
-		  setMotorSpeed(rightMotor,constantPower + ((Kp * variablePower) / 50) + ((Ki * integralConstant) / 50) + ((Kd * derivativeConstant) / 50));
-		  setMotorSpeed(leftMotor,constantPower - ((Kp * variablePower) / 50) - ((Ki * integralConstant) / 50) - ((Kd * derivativeConstant)/ 50) + 20);
-		  previousError = Kp;  // Each time through the loop we set the new value for the previousError
-		}
+	followLine(lineTreshold,20,0);
 }
+
+void turnBack()
+{
+	long curdir = normalizeHeading(getGyroHeading(gyroSensor));
+	long targetdir;
+	if (curdir>=180)
+	{
+		targetdir = curdir;
+		curdir = curdir - 180;
+		while (curdir<targetdir)
+		{
+			setMotorSpeed(leftMotor,100);
+			setMotorSpeed(rightMotor,-100);
+			curdir = normalizeHeading(getGyroHeading(gyroSensor) - 180);
+		}
+ 	}
+ 	else
+ 	{
+ 		targetdir = curdir + 180;
+		while (curdir<targetdir)
+		{
+			setMotorSpeed(leftMotor,100);
+			setMotorSpeed(rightMotor,-100);
+			curdir = normalizeHeading(getGyroHeading(gyroSensor));
+		}
+	}
+}
+
 void moveForward()
 {
 	setMotorSpeed(rightMotor,100);
 	setMotorSpeed(leftMotor,100);
-	delay(2);
-	brake();
-}
-
-void turnRight()
-{
-	setMotorSpeed(rightMotor,-100);
-	setMotorSpeed(leftMotor,100);
-	delay(2);
-	brake();
-}
-
-void turnLeft()
-{
-	setMotorSpeed(rightMotor,100);
-	setMotorSpeed(leftMotor,-100);
 	delay(2);
 	brake();
 }
