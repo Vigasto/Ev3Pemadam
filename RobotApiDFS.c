@@ -12,14 +12,15 @@
 int constantPower = 35;
 int variablePower = 30;
 int integralConstant = 0;
-int derivativeConstant = 0;
+int derivativeConstant = 35;
 float previousError = 0;
 float Kp = 0;
 float Ki = 0;
 float Kd = 0;
+int corrval;
 
 //calib results
-short lineTreshold = 50;
+short lineTreshold = 20;
 
 void initialize();			//inisiasi setting motor & sensor
 void DFSAction();
@@ -109,12 +110,12 @@ void followLine()
 {
   while(!inColor())
   {
-    float corrval = (50-lineTreshold)/50;
-  	Kp = ((getColorAmbient(colorSensor) - lineTreshold) / 50) - corrval;
-    Ki = Ki + ((getColorAmbient(colorSensor) - lineTreshold) / 50) - corrval;
+    corrval = (50-lineTreshold);
+  	Kp = ((getColorAmbient(colorSensor) - lineTreshold)) - corrval;
+    Ki = Ki + Kp;
     Kd = (Kp - previousError);
-    motor[rightMotor] = constantPower + (Kp * variablePower * 1.5) + (Ki * integralConstant) + (Kd * derivativeConstant);
-    motor[leftMotor] = constantPower - (Kp * variablePower * 1.5) - (Ki * integralConstant) - (Kd * derivativeConstant);
+    setMotorSpeed(rightMotor,constantPower + ((Kp * variablePower) / 50) + ((Ki * integralConstant) / 50) + ((Kd * derivativeConstant) / 50));
+    setMotorSpeed(leftMotor,constantPower - ((Kp * variablePower) / 50) - ((Ki * integralConstant) / 50) - ((Kd * derivativeConstant)/ 50));
     previousError = Kp;  // Each time through the loop we set the new value for the previousError
   }
 }
