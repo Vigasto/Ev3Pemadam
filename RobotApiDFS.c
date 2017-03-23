@@ -9,18 +9,21 @@
 
 
 
-int constantPower = 35;
-int variablePower = 30;
+int constantPower = 55;
+int variablePower = 45;
 int integralConstant = 0;
-int derivativeConstant = 35;
+int derivativeConstant = 55;
 float previousError = 0;
 float Kp = 0;
 float Ki = 0;
 float Kd = 0;
 int corrval;
+long red;
+long green;
+long blue;
 
 //calib results
-short lineTreshold = 20;
+short lineTreshold = 45;
 
 void initialize();			//inisiasi setting motor & sensor
 void DFSAction();
@@ -38,7 +41,6 @@ task main()
 	//while(1)
 		//turnLeft();
 		followLine();
-	//lineTreshold = getColorAmbient(colorSensor);
 }
 
 void initialize()
@@ -54,7 +56,8 @@ void DFSAction()
 
 bool inColor()
 {
-	return (getColorName(colorSensor)==colorRed || getColorName(colorSensor)==colorBlue || getColorName(colorSensor)==colorGreen || getColorName(colorSensor)==colorYellow);
+	getColorRGB(colorSensor,red,green,blue);
+	return (getColorName(colorSensor)==colorRed || (blue>=35 && red<35 && green<35) || getColorName(colorSensor)==colorGreen || getColorName(colorSensor)==colorYellow);
 }
 
 bool inLine()
@@ -63,50 +66,6 @@ bool inLine()
 }
 
 void followLine()
-/*{
-	bool switcher = false;             //turn slightly right if 1
-	while (!inColor())
-	{
-		while (inLine() && !inColor())
-			moveForward();
-		if (!inLine() && !inColor())
-		{
-			brake();
-			if (switcher)
-			{
-				resetGyro(gyroSensor);
-				while (!inLine() && getGyroHeading(gyroSensor)<90)
-				{
-					turnRight();
-				}
-				if (getGyroHeading(gyroSensor)>=90)
-				{
-					repeatUntil(getGyroHeading(gyroSensor)<=0)
-						turnLeft();
-					//switcher=!switcher;
-				}
-				resetGyro(gyroSensor);
-			}
-			else
-			{
-				resetGyro(gyroSensor);
-				while (!inLine() && getGyroHeading(gyroSensor)>-90)
-				{
-					turnLeft();
-				}
-				if (getGyroHeading(gyroSensor)<=-90)
-				{
-					repeatUntil(getGyroHeading(gyroSensor)>=0)
-						turnRight();
-					//switcher=!switcher;
-				}
-				resetGyro(gyroSensor);
-			}
-			switcher = !switcher;
-		}
-	}
-}
-*/
 {
   while(!inColor())
   {
@@ -114,7 +73,7 @@ void followLine()
   	Kp = ((getColorAmbient(colorSensor) - lineTreshold)) - corrval;
     Ki = Ki + Kp;
     Kd = (Kp - previousError);
-    setMotorSpeed(rightMotor,constantPower + ((Kp * variablePower) / 50) + ((Ki * integralConstant) / 50) + ((Kd * derivativeConstant) / 50));
+    setMotorSpeed(rightMotor,constantPower + ((Kp * variablePower) / 50) + ((Ki * integralConstant) / 50) + ((Kd * derivativeConstant) / 50) + 20);
     setMotorSpeed(leftMotor,constantPower - ((Kp * variablePower) / 50) - ((Ki * integralConstant) / 50) - ((Kd * derivativeConstant)/ 50));
     previousError = Kp;  // Each time through the loop we set the new value for the previousError
   }
