@@ -25,6 +25,7 @@ short lineTreshold = 17;
 //aubprogram inti
 void initialize();			//inisiasi setting motor & sensor
 void DFSAction();
+void Display();
 //fungsi dasar
 bool inColor();					//Ngecek posisi di blok warna
 bool inLine();          //Ngecek di garis atau path
@@ -61,7 +62,13 @@ void initialize()
 
 void DFSAction()
 {
-
+	bool finish = false;
+	searchPath();
+	while (finish == false)
+	{
+		followpath();
+		if (getColorName(colorSensor)==colorGreen)
+	}
 }
 
 bool inColor()
