@@ -45,7 +45,7 @@ void extinguish();
 task main()
 {
 	initialize();
-	BSFSAction();
+	BFSAction();
 }
 
 void initialize()
@@ -88,7 +88,7 @@ void BFSAction()
 			willreturn = false;
 			returning = true;
 			followPath();
-			degree[4*curJunct+counter[curJunct]]=normalizeHeading(getGyroHeading(gyroSensor));
+			//tidak dicatat agar tidak ditelusuri ketika penambahan level
 		}
 		else if (getColorName(colorSensor)==colorYellow)
 		{
@@ -104,7 +104,7 @@ void BFSAction()
 			{
 				if (willreturn==true && returning == false) //new junction to acknowledge
 				{
-					curJunct++
+					curJunct++;
 					counter[curJunct]=0;
 					mode[curJunct]=false;
 					degree[4*curJunct]=normalizeHeading(getGyroHeading(gyroSensor));
@@ -119,18 +119,19 @@ void BFSAction()
 					if (counter[curJunct]==3)
 					{
 						//nothing to explore
-						mode[curJunct] = seek;
+						mode[curJunct] = true;
 					}
-					SearchPath();
-					if (-30<(normalizeHeading(degree[curJunct]-normalizedHeading-180)) && (normalizeHeading(degree[curJunct]-normalizedHeading-180))<30)
+					searchPath();
+					if (-30<(normalizeHeading(degree[curJunct*4]-getGyroHeading(gyroSensor)-180)) && (normalizeHeading(degree[curJunct*4]-getGyroHeading(gyroSensor)-180))<30)
 					{
 						//nothing to explore
-						mode[curJunct] = seek;
+						mode[curJunct] = true;
 					}
-					if (mode[curJunct] = seek
+					if (mode[curJunct] == true)
 					{
 						willreturn=false;
 						returning=false;
+						searchPath();  //last hit adalah path kembali
 					}
 					else
 			 		{
@@ -142,17 +143,29 @@ void BFSAction()
 			}
 			else //seek or initial
 			{
-				if
-					(//no object remaining
-
+				if (willreturn==false && returning==true) //return from seek
+				{
+					searchPath();
+					if (-30<(normalizeHeading(degree[curJunct*4]-getGyroHeading(gyroSensor)-180)) && (normalizeHeading(degree[curJunct*4]-getGyroHeading(gyroSensor)-180))<30)
+					{	//no object remaining, path adalah path kembali
+						willreturn = false;
+						returning = true;
+						followPath();
 					}
+					else
+					{
+						willreturn = true;
+						returning = false;
+						followPath(); //ready to search
+					}
+				}
 				else if (willreturn==false && returning==false)//new junction to explore
 				{
-					curJunct++
+					curJunct++;
 					counter[curJunct]=0;
 					mode[curJunct]=false;
 					degree[4*curJunct]=normalizeHeading(getGyroHeading(gyroSensor));
-					willreturn==true;
+					willreturn=true;
 					searchPath(); //ready to search
 				}
 			}
