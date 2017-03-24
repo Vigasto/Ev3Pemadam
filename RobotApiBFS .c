@@ -68,10 +68,12 @@ void initialize()
 
 void BFSAction()
 {
+
 	bool mode[maxJunction]; //1 seek, 0 explore
 	bool finish = false;
 	bool returning = false;
 	bool willreturn = false;
+
 	searchPath();            //blok biru start
 	while (finish==false)
 	{
@@ -89,6 +91,7 @@ void BFSAction()
 			returning = true;
 			followPath();
 			//tidak dicatat agar tidak ditelusuri ketika penambahan level
+
 		}
 		else if (getColorName(colorSensor)==colorYellow)
 		{
@@ -233,6 +236,7 @@ void searchPath()
 
 void turnBack()
 {
+
 	brake();
 	long curdir = normalizeHeading(getGyroHeading(gyroSensor));
 	long targetdir;

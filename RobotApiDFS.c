@@ -18,7 +18,7 @@ long red, green, blue;
 short counter[maxJunction+1];
 long degree[maxJunction+1];
 int curJunct; //junction pertama nilainya 1
-char kata[15];
+char kata[25];
 int nkata = 0;
 
 //calib results
@@ -75,7 +75,8 @@ void DFSAction()
 	while (finish == false)
 	{
 		followPath();
-		if (getColorName(colorSensor)==colorBlue)
+		getColorRGB(colorSensor,red, green, blue);
+		if (blue>=35 && red<35 && green<35)
 		{
 			finish = true;
 			brake();
@@ -96,9 +97,8 @@ void DFSAction()
 		{
 			if (curJunct>0)
 			{
-				long candidate = degree[curJunct];
-				if (candidate>=180)
-					candidate = candidate - 180;
+				long candidate = normalizeHeading(getGyroHeading(gyroSensor));
+				candidate = normalizeHeading(candidate - 180);
 				if (-30<(candidate-degree[curJunct-1]) && (candidate-degree[curJunct-1])<30)
 				{
 					returning = true;
