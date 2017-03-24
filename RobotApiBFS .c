@@ -17,7 +17,7 @@ int corrval;
 long red, green, blue;
 short counter[maxJunction+1];
 long degree[maxJunction*4];
-int curJunct; //junction pertama nilainya 0
+int curJunct; //junction pertama nilainya 1
 char kata[15];
 int nkata = 0;
 
@@ -61,17 +61,17 @@ void initialize()
 	Kp = 0;
 	Ki = 0;
 	Kd = 0;
-	curJunct = -1;
+	curJunct = 0;
 	degree[curJunct] = getGyroHeading(gyroSensor);
 	eraseDisplay();
 }
 
 void BFSAction()
 {
+	bool mode[maxJunction]; //1 seek, 0 explore
 	bool finish = false;
 	bool returning = false;
 	bool willreturn = false;
-	bool mode = false;        //1 explore,
 	searchPath();            //blok biru start
 	while (finish==false)
 	{
@@ -85,6 +85,7 @@ void BFSAction()
 		else if (getColorName(colorSensor)==colorRed)
 		{
 			turnBack();
+			willreturn = false;
 			returning = true;
 			followPath();
 			degree[4*curJunct+counter[curJunct]]=normalizeHeading(getGyroHeading(gyroSensor));
@@ -94,19 +95,69 @@ void BFSAction()
 			extinguish();
 			finish = true;
 			turnBack();
+			returning = true;
+			followPath();
 		}
 		else //Junction
 		{
-			if (curJunct>-1)
+			if (mode[curJunct]==false) //explore
 			{
-				long candidate = normalizeHeading(getGyroHeading(gyroSensor));
-				candidate = normalizeHeading(candidate - 180);
-				if (-30<(candidate-degree[curJunct-1]) && (candidate-degree[curJunct-1])<30)
+				if (willreturn==true && returning == false) //new junction to acknowledge
 				{
+					curJunct++
+					counter[curJunct]=0;
+					mode[curJunct]=false;
+					degree[4*curJunct]=normalizeHeading(getGyroHeading(gyroSensor));
+					willreturn=false;
 					returning = true;
 					curJunct--;
-				} // returning to previous branch
+					turnBack();         //go back to explore
+				}
+				else if (willreturn==false && returning==true) //returning from explore
+				{
+					counter[curJunct]++;
+					if (counter[curJunct]==3)
+					{
+						//nothing to explore
+						mode[curJunct] = seek;
+					}
+					SearchPath();
+					if (-30<(normalizeHeading(degree[curJunct]-normalizedHeading-180)) && (normalizeHeading(degree[curJunct]-normalizedHeading-180))<30)
+					{
+						//nothing to explore
+						mode[curJunct] = seek;
+					}
+					if (mode[curJunct] = seek
+					{
+						willreturn=false;
+						returning=false;
+					}
+					else
+			 		{
+			 			willreturn = true;
+			 			returning = false;
+			 		}
+				}
+
 			}
+			else //seek or initial
+			{
+				if
+					(//no object remaining
+
+					}
+				else if (willreturn==false && returning==false)//new junction to explore
+				{
+					curJunct++
+					counter[curJunct]=0;
+					mode[curJunct]=false;
+					degree[4*curJunct]=normalizeHeading(getGyroHeading(gyroSensor));
+					willreturn==true;
+					searchPath(); //ready to search
+				}
+			}
+		}
+	}
 }
 
 void Display(int way)
